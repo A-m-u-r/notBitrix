@@ -1,0 +1,92 @@
+:root {
+  --page-gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--page-gap);
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-actions .el-button {
+  margin-left: 0 !important;
+}
+
+.el-table .cell .el-button {
+  min-height: 32px;
+}
+
+.el-table .cell .el-button + .el-button {
+  margin-left: 8px;
+}
+
+.table-actions .el-button.is-link,
+.table-actions .el-button.is-text {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.el-dialog__footer .el-button,
+.page-header .el-button,
+.page-actions .el-button {
+  min-height: 36px;
+}
+
+.icon-hit-area {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  color: #606266;
+}
+
+.icon-hit-area:hover {
+  background: #f3f5f7;
+}
+
+.el-card .el-card__header {
+  line-height: 1.3;
+}
+
+.filter-grid .el-col {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+}
