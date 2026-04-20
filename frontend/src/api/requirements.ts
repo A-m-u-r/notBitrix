@@ -1,0 +1,18 @@
+import { api } from './client'
+const base = (pid: number) => `/projects/${pid}/requirements`
+export const getRequirements = (pid: number, params?: any) => api.get(base(pid), { params })
+export const getDeletedRequirements = (pid: number) => api.get(`${base(pid)}/trash`)
+export const getRequirement = (pid: number, id: number) => api.get(`${base(pid)}/${id}`)
+export const createRequirement = (pid: number, data: any) => api.post(base(pid), data)
+export const updateRequirement = (pid: number, id: number, data: any) => api.patch(`${base(pid)}/${id}`, data)
+export const transitionStatus = (pid: number, id: number, status: string) => api.post(`${base(pid)}/${id}/status`, { status })
+export const getHistory = (pid: number, id: number) => api.get(`${base(pid)}/${id}/history`)
+export const getLinks = (pid: number, id: number) => api.get(`${base(pid)}/${id}/links`)
+export const getRequirementComments = (pid: number, id: number) => api.get(`${base(pid)}/${id}/comments`)
+export const addRequirementComment = (pid: number, id: number, body: string) => api.post(`${base(pid)}/${id}/comments`, { body })
+export const addLink = (pid: number, id: number, data: any) => api.post(`${base(pid)}/${id}/links`, data)
+export const removeLink = (pid: number, id: number, linkId: number) => api.delete(`${base(pid)}/${id}/links/${linkId}`)
+export const getTraceability = (pid: number) => api.get(`${base(pid)}/traceability`)
+export const deleteRequirement = (pid: number, id: number) => api.delete(`${base(pid)}/${id}`)
+export const restoreRequirement = (pid: number, id: number) => api.post(`${base(pid)}/${id}/restore`)
+export const purgeRequirement = (pid: number, id: number) => api.delete(`${base(pid)}/${id}/purge`)

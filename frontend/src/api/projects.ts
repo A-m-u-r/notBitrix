@@ -1,0 +1,13 @@
+import { api } from './client'
+export const getProjects = () => api.get('/projects')
+export const getDeletedProjects = () => api.get('/projects/trash')
+export const getProject = (id: number) => api.get(`/projects/${id}`)
+export const createProject = (data: any) => api.post('/projects', data)
+export const updateProject = (id: number, data: any) => api.patch(`/projects/${id}`, data)
+export const deleteProject = (id: number) => api.delete(`/projects/${id}`)
+export const restoreProject = (id: number) => api.post(`/projects/${id}/restore`)
+export const purgeProject = (id: number) => api.delete(`/projects/${id}/purge`)
+export const getProjectMembers = (id: number) => api.get(`/projects/${id}/members`)
+export const addProjectMember = (id: number, data: any) => api.post(`/projects/${id}/members`, data)
+export const removeProjectMember = (id: number, userId: number) => api.delete(`/projects/${id}/members/${userId}`)
+export const getProjectStats = (id: number) => api.get(`/projects/${id}/stats`)
