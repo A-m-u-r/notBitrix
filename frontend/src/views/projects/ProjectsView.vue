@@ -6,7 +6,7 @@
         <el-button type="primary" :icon="Plus" @click="showCreate = true" v-if="auth.canPermission('projects.manage')">
           Новый проект
         </el-button>
-        <el-button v-if="auth.canPermission('projects.delete_restore')" @click="openTrash">Корзина</el-button>
+        <el-button v-if="auth.canPermission('projects.delete_restore') && canDeleteProjects" @click="openTrash">Корзина</el-button>
       </div>
     </div>
 
@@ -17,13 +17,14 @@
             <el-tag :type="project.status === 'active' ? 'success' : 'info'" size="small">
               {{ project.status === 'active' ? 'Активный' : 'Архив' }}
             </el-tag>
-            <el-dropdown @command="(command: string) => handleCmd(command, project)" @click.stop>
-              <button class="icon-hit-area" type="button" aria-label="Project menu">
+            <el-dropdown trigger="click" @command="(command: string) => handleCmd(command, project)" @click.stop>
+              <button class="icon-hit-area" type="button" aria-label="Project menu" @click.stop>
                 <el-icon><MoreFilled /></el-icon>
               </button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="archive" v-if="auth.canPermission('projects.manage')">Архивировать</el-dropdown-item>
+                  <el-dropdown-item command="delete" v-if="auth.canPermission('projects.delete_restore') && canDeleteProjects">Удалить</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -78,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { MoreFilled, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -87,6 +88,7 @@ import { useAuthStore } from '../../stores/auth.store'
 import type { Project } from '../../types'
 
 const auth = useAuthStore()
+const canDeleteProjects = computed(() => auth.can('Admin', 'Director'))
 const router = useRouter()
 const projects = ref<Project[]>([])
 const deletedProjects = ref<any[]>([])
@@ -128,6 +130,14 @@ async function handleCmd(cmd: string, project: Project) {
     await projectsApi.updateProject(project.id, { status: 'archived' })
     project.status = 'archived'
     ElMessage.success('Проект архивирован')
+    return
+  }
+
+  if (cmd === 'delete') {
+    await ElMessageBox.confirm(`Удалить проект "${project.name}"?`, 'Подтверждение', { type: 'warning' })
+    await projectsApi.deleteProject(project.id)
+    projects.value = projects.value.filter((item) => item.id !== project.id)
+    ElMessage.success('Проект перемещен в корзину')
   }
 }
 
@@ -161,4 +171,3 @@ async function purge(id: number) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .proj-footer { display: flex; justify-content: space-between; font-size: 12px; color: #c0c4cc; }
 </style>
-
