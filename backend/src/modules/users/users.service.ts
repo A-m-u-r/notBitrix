@@ -9,7 +9,7 @@ function getAdminRoleId(): number {
 
 function assertNotRemovingLastActiveAdmin(userId: number, nextRoleId: number, nextIsActive: number) {
   const adminRoleId = getAdminRoleId()
-  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ?').get(userId) as { role_id: number; is_active: number } | undefined
+  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ? AND deleted_at IS NULL').get(userId) as { role_id: number; is_active: number } | undefined
   if (!current) throw Object.assign(new Error('Пользователь не найден'), { status: 404 })
 
   const wasActiveAdmin = current.role_id === adminRoleId && current.is_active === 1
@@ -17,7 +17,7 @@ function assertNotRemovingLastActiveAdmin(userId: number, nextRoleId: number, ne
 
   if (!wasActiveAdmin || willStayActiveAdmin) return
 
-  const others = db.prepare('SELECT COUNT(*) AS n FROM users WHERE role_id = ? AND is_active = 1 AND id != ?')
+  const others = db.prepare('SELECT COUNT(*) AS n FROM users WHERE role_id = ? AND is_active = 1 AND deleted_at IS NULL AND id != ?')
     .get(adminRoleId, userId) as { n: number }
   if (others.n === 0) {
     throw Object.assign(new Error('Нельзя деактивировать последнего активного администратора'), { status: 400 })
@@ -40,7 +40,7 @@ export function listUsers(search?: string, roleId?: string) {
   let sql = `SELECT u.id, u.email, u.full_name, u.role_id, r.name AS role_name, u.is_active, u.created_at
              FROM users u
              JOIN roles r ON r.id = u.role_id
-             WHERE r.deleted_at IS NULL`
+             WHERE r.deleted_at IS NULL AND u.deleted_at IS NULL`
   const params: any[] = []
   if (search) { sql += ' AND (u.full_name LIKE ? OR u.email LIKE ?)'; params.push(`%${search}%`, `%${search}%`) }
   if (roleId) { sql += ' AND u.role_id = ?'; params.push(roleId) }
@@ -51,7 +51,7 @@ export function listUsers(search?: string, roleId?: string) {
 export function getUser(id: number) {
   return db.prepare(`SELECT u.id, u.email, u.full_name, u.role_id, r.name AS role_name, u.is_active, u.created_at
     FROM users u JOIN roles r ON r.id = u.role_id
-    WHERE u.id = ? AND r.deleted_at IS NULL`).get(id)
+    WHERE u.id = ? AND r.deleted_at IS NULL AND u.deleted_at IS NULL`).get(id)
 }
 
 export function createUser(data: { email: string; full_name: string; password: string; role_id: number }) {
@@ -65,7 +65,7 @@ export function createUser(data: { email: string; full_name: string; password: s
 }
 
 export function updateUser(id: number, data: { full_name?: string; role_id?: number; is_active?: number }) {
-  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ?').get(id) as { role_id: number; is_active: number } | undefined
+  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ? AND deleted_at IS NULL').get(id) as { role_id: number; is_active: number } | undefined
   if (!current) throw Object.assign(new Error('Пользователь не найден'), { status: 404 })
 
   if (data.role_id !== undefined) assertRoleIsAvailable(data.role_id)
@@ -87,7 +87,7 @@ export function updateUser(id: number, data: { full_name?: string; role_id?: num
 }
 
 export function deactivateUser(id: number) {
-  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ?').get(id) as { role_id: number; is_active: number } | undefined
+  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ? AND deleted_at IS NULL').get(id) as { role_id: number; is_active: number } | undefined
   if (!current) throw Object.assign(new Error('Пользователь не найден'), { status: 404 })
   assertNotRemovingLastActiveAdmin(id, current.role_id, 0)
 
@@ -96,11 +96,28 @@ export function deactivateUser(id: number) {
 }
 
 export function activateUser(id: number) {
-  const user = db.prepare('SELECT id, role_id FROM users WHERE id = ?').get(id) as { id: number; role_id: number } | undefined
+  const user = db.prepare('SELECT id, role_id FROM users WHERE id = ? AND deleted_at IS NULL').get(id) as { id: number; role_id: number } | undefined
   if (!user) throw Object.assign(new Error('Пользователь не найден'), { status: 404 })
   assertRoleIsAvailable(user.role_id)
   db.prepare("UPDATE users SET is_active = 1, updated_at = datetime('now') WHERE id = ?").run(id)
   return getUser(id)
+}
+
+export function deleteUser(id: number, actorId: number) {
+  if (id === actorId) {
+    throw Object.assign(new Error('Нельзя удалить собственного пользователя'), { status: 400 })
+  }
+
+  const current = db.prepare('SELECT role_id, is_active FROM users WHERE id = ? AND deleted_at IS NULL').get(id) as { role_id: number; is_active: number } | undefined
+  if (!current) throw Object.assign(new Error('Пользователь не найден'), { status: 404 })
+
+  assertNotRemovingLastActiveAdmin(id, current.role_id, 0)
+
+  const tx = db.transaction(() => {
+    db.prepare("UPDATE users SET is_active = 0, deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?").run(id)
+    db.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').run(id)
+  })
+  tx()
 }
 
 export function getUserActivity(id: number) {
@@ -129,7 +146,7 @@ export function listRoles(includeDeleted = false) {
       COUNT(u.id) AS users_count,
       SUM(CASE WHEN u.is_active = 1 THEN 1 ELSE 0 END) AS active_users_count
     FROM roles r
-    LEFT JOIN users u ON u.role_id = r.id
+    LEFT JOIN users u ON u.role_id = r.id AND u.deleted_at IS NULL
     ${condition}
     GROUP BY r.id
     ORDER BY r.name

@@ -24,7 +24,7 @@ export function login(email: string, password: string) {
     SELECT u.*, r.name AS role_name
     FROM users u
     JOIN roles r ON r.id = u.role_id
-    WHERE u.email = ? AND u.is_active = 1 AND r.deleted_at IS NULL
+    WHERE u.email = ? AND u.is_active = 1 AND u.deleted_at IS NULL AND r.deleted_at IS NULL
   `).get(email) as (User & { password_hash: string }) | undefined
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
@@ -100,7 +100,7 @@ export function refresh(token: string) {
     SELECT u.*, r.name AS role_name
     FROM users u
     JOIN roles r ON r.id = u.role_id
-    WHERE u.id = ? AND u.is_active = 1 AND r.deleted_at IS NULL
+    WHERE u.id = ? AND u.is_active = 1 AND u.deleted_at IS NULL AND r.deleted_at IS NULL
   `).get(row.user_id) as User | undefined
 
   if (!user) throw Object.assign(new Error('Пользователь не найден'), { status: 401 })

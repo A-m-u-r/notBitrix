@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import { authenticate, requirePermission } from '../../middleware/auth'
+import { authenticate, requirePermission, requireRole } from '../../middleware/auth'
 import * as svc from './users.service'
 
 const router = Router()
@@ -116,5 +116,13 @@ router.patch('/:id/activate', requirePermission('users.activate'), (req: Request
   }
 })
 
-export default router
+router.delete('/:id', requireRole('Admin', 'Director'), (req: Request, res: Response) => {
+  try {
+    svc.deleteUser(Number(req.params.id), req.user!.id)
+    res.json({ message: 'Пользователь удален' })
+  } catch (e: any) {
+    res.status(e.status || 500).json({ message: e.message })
+  }
+})
 
+export default router
