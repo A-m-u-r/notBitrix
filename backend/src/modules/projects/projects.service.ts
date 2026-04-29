@@ -1,7 +1,7 @@
 import { db } from '../../config/database'
 
-export function listProjects(userId: number, isAdmin: boolean) {
-  if (isAdmin) {
+export function listProjects(userId: number, canViewAll: boolean) {
+  if (canViewAll) {
     return db.prepare(`SELECT p.*, u.full_name AS owner_name
       FROM projects p JOIN users u ON u.id = p.owner_id
       WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC`).all()
@@ -13,8 +13,8 @@ export function listProjects(userId: number, isAdmin: boolean) {
     ORDER BY p.created_at DESC`).all(userId, userId)
 }
 
-export function listDeletedProjects(userId: number, isAdmin: boolean) {
-  if (isAdmin) {
+export function listDeletedProjects(userId: number, canViewAll: boolean) {
+  if (canViewAll) {
     return db.prepare(`SELECT p.*, u.full_name AS owner_name
       FROM projects p JOIN users u ON u.id = p.owner_id
       WHERE p.deleted_at IS NOT NULL ORDER BY p.deleted_at DESC`).all()
@@ -97,4 +97,3 @@ export function getStats(projectId: number) {
   const activeSprint = db.prepare(`SELECT * FROM sprints WHERE project_id = ? AND status = 'active' LIMIT 1`).get(projectId)
   return { reqByStatus, bugsByStatus, tasksByStatus, activeSprint }
 }
-

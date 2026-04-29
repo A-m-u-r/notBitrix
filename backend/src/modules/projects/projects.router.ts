@@ -1,18 +1,18 @@
 import { Router, Request, Response } from 'express'
-import { authenticate, requirePermission } from '../../middleware/auth'
+import { authenticate, requirePermission, requireRole } from '../../middleware/auth'
 import * as svc from './projects.service'
 
 const router = Router()
 router.use(authenticate)
 
 router.get('/', requirePermission('projects.view'), (req: Request, res: Response) => {
-  const isAdmin = req.user!.role_name === 'Admin'
-  res.json(svc.listProjects(req.user!.id, isAdmin))
+  const canViewAll = ['Admin', 'Director'].includes(req.user!.role_name)
+  res.json(svc.listProjects(req.user!.id, canViewAll))
 })
 
 router.get('/trash', requirePermission('projects.delete_restore'), (req, res) => {
-  const isAdmin = req.user!.role_name === 'Admin'
-  res.json(svc.listDeletedProjects(req.user!.id, isAdmin))
+  const canViewAll = ['Admin', 'Director'].includes(req.user!.role_name)
+  res.json(svc.listDeletedProjects(req.user!.id, canViewAll))
 })
 
 router.post('/', requirePermission('projects.manage'), (req: Request, res: Response) => {
@@ -29,18 +29,18 @@ router.patch('/:id', requirePermission('projects.manage'), (req: Request, res: R
   res.json(svc.updateProject(Number(req.params.id), req.body))
 })
 
-router.delete('/:id', requirePermission('projects.delete_restore'), (req: Request, res: Response) => {
+router.delete('/:id', requireRole('Admin', 'Director'), requirePermission('projects.delete_restore'), (req: Request, res: Response) => {
   svc.deleteProject(Number(req.params.id))
   res.json({ message: 'Проект перемещен в корзину' })
 })
 
-router.post('/:id/restore', requirePermission('projects.delete_restore'), (req, res) => {
+router.post('/:id/restore', requireRole('Admin', 'Director'), requirePermission('projects.delete_restore'), (req, res) => {
   const project = svc.restoreProject(Number(req.params.id))
   if (!project) return res.status(404).json({ message: 'Проект не найден в корзине' })
   res.json(project)
 })
 
-router.delete('/:id/purge', requirePermission('projects.delete_restore'), (req, res) => {
+router.delete('/:id/purge', requireRole('Admin', 'Director'), requirePermission('projects.delete_restore'), (req, res) => {
   const deleted = svc.getDeletedProject(Number(req.params.id))
   if (!deleted) return res.status(404).json({ message: 'Проект не найден в корзине' })
   svc.purgeProject(Number(req.params.id))
@@ -66,4 +66,3 @@ router.get('/:id/stats', requirePermission('projects.view'), (req: Request, res:
 })
 
 export default router
-
