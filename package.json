@@ -1,0 +1,8 @@
+{
+  "name": "ais",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.js"
+  }
+}
