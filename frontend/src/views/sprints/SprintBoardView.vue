@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="scrum-board-page">
     <div class="page-header">
       <div>
         <el-breadcrumb separator="/">
@@ -15,17 +15,17 @@
       </div>
     </div>
 
-    <el-tag :type="sprintStatusType[sprint?.status] as any" style="margin-bottom: 12px;">
+    <el-tag class="sprint-chip" :type="sprintStatusType[sprint?.status] as any">
       {{ sprintStatusLabel[sprint?.status] || sprint?.status }} | {{ sprint?.start_date || 'n/a' }} - {{ sprint?.end_date || 'n/a' }}
     </el-tag>
 
-    <el-card shadow="never" style="margin-bottom: 14px;">
+    <el-card shadow="never" class="burndown-card">
       <template #header><strong>Burndown</strong></template>
       <Line
         v-if="burndownChartData"
         :data="burndownChartData"
         :options="burndownOptions"
-        style="max-height: 280px"
+        class="burndown-chart"
       />
       <el-empty v-else description="No burndown data yet" :image-size="60" />
     </el-card>
@@ -323,30 +323,49 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.scrum-board-page {
+  min-width: 0;
+}
+
+.sprint-chip {
+  align-self: flex-start;
   margin-bottom: 12px;
 }
 
 .header-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.burndown-card :deep(.el-card__body) {
+  height: 280px;
+}
+
+.burndown-card {
+  margin-bottom: 14px;
+}
+
+.burndown-chart {
+  height: 100%;
 }
 
 .kanban {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
+  align-items: start;
 }
 
 .kanban-col {
-  flex: 0 0 240px;
   background: #f3f5f7;
   border-radius: 8px;
-  min-height: 460px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 .col-header {
@@ -363,6 +382,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
 .kanban-card {
@@ -405,5 +425,11 @@ onMounted(async () => {
 .comment-date {
   font-size: 12px;
   color: #909399;
+}
+
+@media (max-width: 1200px) {
+  .kanban {
+    grid-auto-columns: 240px;
+  }
 }
 </style>

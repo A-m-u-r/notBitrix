@@ -26,7 +26,7 @@
       <el-sub-menu v-if="currentProject" index="project">
         <template #title>
           <el-icon><Document /></el-icon>
-          <span>{{ currentProject }}</span>
+          <span class="project-title" :title="currentProject">{{ currentProject }}</span>
         </template>
 
         <el-menu-item :index="`/projects/${pid}/requirements`">
@@ -106,5 +106,14 @@ const currentProject = computed(() => projectStore.current?.name)
 .el-menu {
   border-right: none;
   flex: 1;
+}
+
+.project-title {
+  display: inline-block;
+  max-width: 128px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 </style>

@@ -181,16 +181,20 @@ const statusStats = computed(() => {
 
 onMounted(async () => {
   await projectStore.fetchOne(pid.value)
-  const [s, m, st, u] = await Promise.all([
+  const [s, m, st] = await Promise.all([
     sprintsApi.getSprints(pid.value),
     projectsApi.getProjectMembers(pid.value),
-    projectsApi.getProjectStats(pid.value),
-    getUsers()
+    projectsApi.getProjectStats(pid.value)
   ])
   sprints.value = s.data
   members.value = m.data
   stats.value = st.data
-  allUsers.value = u.data
+
+  // Not all roles can read the full user directory.
+  if (auth.canPermission('users.view')) {
+    const { data } = await getUsers()
+    allUsers.value = data
+  }
 })
 
 function go(section: string) { router.push(`/projects/${pid.value}/${section}`) }
