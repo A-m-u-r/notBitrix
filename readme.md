@@ -1,3 +1,31 @@
+## Запуск проекта
+
+### 1) Backend
+
+```powershell
+cd backend
+npm install
+npm run dev
+```
+
+Backend поднимается на `http://localhost:3000`.
+
+### 2) Frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend поднимается на `http://localhost:5173`.
+
+### Проверка
+
+После запуска:
+- `http://localhost:5173` — UI
+- `http://localhost:3000/api/v1/auth/me` — API (ожидаемо вернет `401` без токена)
+
 Plan the implementation of an AIS (Automated Information System) for requirements management for LLC "Slider Presentations". Tech stack: Vue 3 + TypeScript frontend, Node.js + Express backend, SQLite database (for easy local dev without external dependencies).
 
 System must include:
