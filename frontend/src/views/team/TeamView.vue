@@ -30,7 +30,7 @@
           <el-tag :type="row.is_active ? 'success' : 'info'">{{ row.is_active ? 'Активен' : 'Деактивирован' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Действия" width="360">
+      <el-table-column label="Действия" width="460">
         <template #default="{ row }">
           <div class="table-actions">
             <el-button v-if="canManageUsers" @click="openEdit(row)">Редактировать</el-button>
@@ -49,6 +49,14 @@
               @click="activate(row)"
             >
               Активировать
+            </el-button>
+            <el-button
+              v-if="canDeleteUsers && row.id !== auth.user?.id"
+              type="danger"
+              text
+              @click="removeUser(row)"
+            >
+              Удалить
             </el-button>
             <el-button text @click="loadActivity(row)">Активность</el-button>
           </div>
@@ -224,6 +232,7 @@ import type { User } from '../../types'
 const auth = useAuthStore()
 const canManageUsers = computed(() => auth.canPermission('users.manage'))
 const canActivateUsers = computed(() => auth.canPermission('users.activate'))
+const canDeleteUsers = computed(() => auth.can('Admin', 'Director'))
 const canViewRoles = computed(() => auth.canPermission('roles.view'))
 const canManageRoles = computed(() => auth.canPermission('roles.manage'))
 const canAssignPermissions = computed(() => auth.canPermission('roles.assign_permissions'))
@@ -317,6 +326,13 @@ async function activate(user: User) {
   ElMessage.success('Пользователь активирован')
 }
 
+async function removeUser(user: User) {
+  await ElMessageBox.confirm(`Удалить пользователя "${user.full_name}"?`, 'Подтверждение', { type: 'warning' })
+  await usersApi.deleteUser(user.id)
+  await loadUsers()
+  ElMessage.success('Пользователь удален')
+}
+
 async function loadActivity(user: User) {
   const { data } = await usersApi.getUserActivity(user.id)
   activity.value = data
@@ -391,4 +407,3 @@ onMounted(async () => {
   await loadRoles()
 })
 </script>
-
